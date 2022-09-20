@@ -1,0 +1,9 @@
+target
+**/target/*
+*.iml
+.idea/
+atlassian-ide-plugin.xml
+*.ipr
+*.iws
+*.bsp
+maven-cli-idea-plugin.jar

@@ -71,6 +71,14 @@ object SlickTables{
 
 object TableDefinitionGenerator {
   def main(args: Array[String]): Unit = {
+    /*
+    will create needed sql scripts for creating tables
+
+    create table if not exists "movies"."Movie" ("movie_id" BIGSERIAL NOT NULL PRIMARY KEY,"name" VARCHAR NOT NULL,"release_date" DATE NOT NULL,"length_in_min" INTEGER NOT NULL);
+create table if not exists "movies"."Actor" ("actor_id" BIGSERIAL NOT NULL PRIMARY KEY,"name" VARCHAR NOT NULL);
+create table if not exists "movies"."MovieActorMapping" ("id" BIGSERIAL NOT NULL PRIMARY KEY,"movie_id" BIGINT NOT NULL,"actor_id" BIGINT NOT NULL);
+create table if not exists "movies"."StreamingProviderMapping" ("id" BIGSERIAL NOT NULL PRIMARY KEY,"movie_id" BIGINT NOT NULL,"streaming_provider" VARCHAR NOT NULL)
+     */
     println(SlickTables.ddl.createIfNotExistsStatements.mkString("; \n"))
   }
 }
