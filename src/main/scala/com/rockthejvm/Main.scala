@@ -22,6 +22,12 @@ object Main {
   val phantomMenace: Movie = Movie(3, "Start Wars: a phantom Menace", LocalDate.of(1999, 5, 16), 133)
   val leanNeeson: Actor = Actor(10L, "Lean Neeson")
 
+  val providers = List(
+    StreamingProviderMapping(1L, 5L, StreamingProvider.Netflix),
+    StreamingProviderMapping(1L, 6L, StreamingProvider.Prime),
+    StreamingProviderMapping(1L, 7L, StreamingProvider.Disney)
+  )
+
   def demoInsertMovie(): Unit ={
     val queryDescription = SlickTables.movieTable += somemovie3
     val futureId: Future[Int] = Connection.db.run(queryDescription)
@@ -104,16 +110,22 @@ object Main {
     Connection.db.run(joinQuery.result)
   }
 
+  def addStreamingProvider() = {
+    val streamingQuery = SlickTables.streamingProviderMappingTable ++= providers
+    Connection.db.run(streamingQuery)
+  }
 
+  def findProviderForMovidId(movieId: Long): Future[Seq[StreamingProviderMapping]] = {
+    val findQuery = SlickTables.streamingProviderMappingTable.filter(_.movieId === movieId)
+    Connection.db.run(findQuery.result)
+  }
 
   def main(args: Array[String]) : Unit = {
 
-    val movieId= 7L
-    findAllActorsByMovie(movieId).onComplete {
+    findProviderForMovidId(6).onComplete {
       case Failure(exception) => ???
-      case Success(value) => println(s"Actors from movie with id $movieId: $value")
+      case Success(value) => println(s"result: ${value.map(_.streamingProvider)}")
     }
-
     Thread.sleep(5000)
     PrivateExecutionContext.executor.shutdown()
   }
