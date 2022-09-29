@@ -1,11 +1,19 @@
 package com.rockthejvm
 
+import com.rockthejvm.SlickTables.MovieTable
+import play.api.libs.json.JsValue
+
 import java.time.LocalDate
 
 case class Movie(id: Long, name: String, releaseDate: LocalDate, lengthInMin: Int)
 case class  Actor(id: Long, name: String)
 case class MovieActorMapping(id: Long, movieId: Long, actorId: Long)
 case class StreamingProviderMapping(id: Long, movieId: Long, streamingProvider: StreamingProvider.Provider)
+
+// part 4
+case class MovieLocations(id: Long, movieId: Long, locations: List[String])
+case class MovieProperties(id: Long, movieId: Long, properties: Map[String, String])
+case class ActorDetails(id: Long, actorId: Long, personalDetails: JsValue)
 
 object StreamingProvider extends Enumeration {
   type Provider = Value
@@ -67,6 +75,44 @@ object SlickTables{
   // table generation script
   val tables = List(movieTable, actorTable, movieActorMappingTable, streamingProviderMappingTable)
   val ddl = tables.map(_.schema).reduce( _ ++ _)
+}
+
+object SpecialTables{
+  /*
+  need to define in buildSb
+   "com.github.tminglei" %% "slick-pg" % "0.20.3",
+  "com.github.tminglei" %% "slick-pg_play-json" % "0.20.3"
+   */
+  import com.rockthejvm.CustomPostgresProfile.api._
+
+  class MovieLocationTable(tag: Tag) extends Table[MovieLocations](tag, Some("movies"), "MovieLocations"){
+    def id: Rep[Long] = column[Long]("movie_location_id", O.PrimaryKey, O.AutoInc)
+    def movieId: Rep[Long] = column[Long]("movie_id")
+    def locations: Rep[List[String]] = column[List[String]]("locations")
+    //mapping function to the case class
+    override def * = (id, movieId, locations) <> (MovieLocations.tupled, MovieLocations.unapply)
+  }
+
+  class MoviePropertiesTable(tag: Tag) extends Table[MovieProperties](tag, Some("movies"), "MovieProperties"){
+    def id: Rep[Long] = column[Long]("movie_location_id", O.PrimaryKey, O.AutoInc)
+    def movieId: Rep[Long] = column[Long]("movie_id")
+    def properties: Rep[Map[String, String]] = column[Map[String, String]]("properties")
+    //mapping function to the case class
+    override def * = (id, movieId, properties) <> (MovieProperties.tupled, MovieProperties.unapply)
+  }
+
+  class ActorDetailsTable(tag: Tag) extends Table[ActorDetails](tag, Some("movies"), "ActorDetails"){
+    def id: Rep[Long] = column[Long]("id", O.PrimaryKey, O.AutoInc)
+    def actorId: Rep[Long] = column[Long]("actor_id")
+    def personalInfo: Rep[JsValue] = column[JsValue]("personal_info")
+    //mapping function to the case class
+    override def * = (id, actorId, personalInfo) <> (ActorDetails.tupled, ActorDetails.unapply)
+  }
+
+  // "API entry point"
+  lazy val movieLocationTable = TableQuery[MovieLocationTable]
+  lazy val moviePropertiesTable = TableQuery[MoviePropertiesTable]
+  lazy val actorDetailsTable = TableQuery[ActorDetailsTable]
 }
 
 object TableDefinitionGenerator {

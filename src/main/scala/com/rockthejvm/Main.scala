@@ -1,9 +1,11 @@
 package com.rockthejvm
 
+import play.api.libs.json.Json
 import slick.jdbc.GetResult
 
 import java.time.LocalDate
-import slick.jdbc.PostgresProfile.api._
+//import slick.jdbc.PostgresProfile.api._
+import CustomPostgresProfile.api._
 
 import java.util.concurrent.{ExecutorService, Executors}
 import scala.concurrent.{ExecutionContext, Future}
@@ -27,6 +29,24 @@ object Main {
     StreamingProviderMapping(1L, 6L, StreamingProvider.Prime),
     StreamingProviderMapping(1L, 7L, StreamingProvider.Disney)
   )
+
+  val starWarsLocations = MovieLocations(1L, 3L, List("Here", "There", "Also here"))
+  val starWarsProperties = MovieProperties(1L, 10L, Map("Key1"-> "Value1","Key2"-> "Value2"))
+  val leanNeesonDetails = ActorDetails(1L, 3L, Json.parse(
+    """
+      |{
+      | "born" : 1952,
+      | "param" : "yes"
+      |}
+      |""".stripMargin))
+
+  val aaaaaDetails = ActorDetails(1L, 5L, Json.parse(
+    """
+      |{
+      | "born" : 1972,
+      | "param" : "yes"
+      |}
+      |""".stripMargin))
 
   def demoInsertMovie(): Unit ={
     val queryDescription = SlickTables.movieTable += somemovie3
@@ -120,11 +140,42 @@ object Main {
     Connection.db.run(findQuery.result)
   }
 
+  def insertLocationStartWars = {
+    val query = SpecialTables.movieLocationTable += starWarsLocations
+    Connection.db.run(query)
+  }
+
+  def insertProperties = {
+    val query = SpecialTables.moviePropertiesTable += starWarsProperties
+    Connection.db.run(query)
+  }
+
+  def insertActorDetails = {
+    val query = SpecialTables.actorDetailsTable += aaaaaDetails
+    Connection.db.run(query)
+  }
+
+  //https://blog.rockthejvm.com/slick/#61-querying-from-an-array-column
+  //Querying from an Array Column
+  def getFromArrayColumn: Future[Seq[MovieLocations]] = {
+    val locations: List[String] = List("Here", "There")
+    //if there is atleast one common item between the column value and input list, it will return true.
+    val query = SpecialTables.movieLocationTable.filter(_.locations @& locations.bind)
+    Connection.db.run(query.result)
+  }
+
+//https://blog.rockthejvm.com/slick/#63-querying-from-a-json-column
+  def getActorsBornOn(year: String): Future[Seq[ActorDetails]] = {
+    Connection.db.run(
+      SpecialTables.actorDetailsTable.filter(_.personalInfo.+>>("born") === year.bind).result
+    )
+  }
+
   def main(args: Array[String]) : Unit = {
 
-    findProviderForMovidId(6).onComplete {
-      case Failure(exception) => ???
-      case Success(value) => println(s"result: ${value.map(_.streamingProvider)}")
+    getActorsBornOn("1952").onComplete {
+      case Failure(exception) => println(exception)
+      case Success(value) => println(value)
     }
     Thread.sleep(5000)
     PrivateExecutionContext.executor.shutdown()
